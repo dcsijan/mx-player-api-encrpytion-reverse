@@ -143,23 +143,11 @@ LwIDAQAB
                             season_res = requests.get(season_url, headers=headers_simple, proxies=proxies)
                             if season_res.status_code == 200:
                                 season_data = season_res.json()
-                                for tab in season_data.get('tabs', []):
-                                    for container in tab.get('containers', []):
-                                        if isinstance(container, dict) and container.get('type') == 'season':
-                                            seasons.append({
-                                                'id': container.get('id'),
-                                                'title': container.get('title'),
-                                                'episodes_count': container.get('episodesCount', 0)
-                                            })
-                        results.append({
-                            'title': item.get('title'),
-                            'image': item.get('imageInfo', [None])[0]['url'] if item.get('imageInfo') else '',
-                            'type': item.get('type'),
-                            'seasons': seasons
-                        })
-            return results
+                               
+            return season_data
 
         results = get_movie_or_tv_show_streams(data)
+        print(results)
         return jsonify(results)
     else:
         return jsonify({"error": "Failed to fetch data", "status": response.status_code}), response.status_code
