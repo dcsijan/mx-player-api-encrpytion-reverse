@@ -112,3 +112,301 @@ print('Decrypted data:', decrypted)
 ######
 
 
+
+proxy_url = "http://as77hs6qjikh4xg-country-in:neatfbj2cw4f37g@rp.scrapegw.com:6060"
+proxies = {
+    "http": proxy_url,
+    "https": proxy_url,
+}
+
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)
+@app.route('/movies', methods=['GET'])
+def get_movie():
+    movie_name = request.args.get('movie_name')
+    import uuid,requests,json
+    m = uuid.uuid4().hex
+
+
+
+    import json
+    import base64
+    from Crypto.Cipher import AES
+    from Crypto.Util.Padding import pad
+
+    def encrypt_request_data(data, key):
+        # Convert data to JSON string and then to bytes
+        data_json = json.dumps(data).encode('utf-8')
+    
+        # Pad the data to be compatible with AES block size
+        padded_data = pad(data_json, AES.block_size)
+    
+        # Create AES cipher object with ECB mode
+        cipher = AES.new(key, AES.MODE_ECB)
+    
+        # Encrypt the data
+        encrypted_data = cipher.encrypt(padded_data)
+    
+        # Return base64 encoded result
+        return base64.b64encode(encrypted_data).decode('utf-8')
+
+    # Your specific key (note this is treated as UTF-8 string, not hex)
+    SECRET_KEY = m.encode('utf-8')
+
+    # Usage example
+    request_data = {}
+    encrypted = encrypt_request_data(request_data, SECRET_KEY)
+    print('Encrypted:', encrypted)
+
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import PKCS1_v1_5
+    from Crypto.Util import Padding
+    import base64
+
+    # Public Key (PEM Format)
+    public_key_pem = '''-----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAl4CJiMro7S7EwvCjnpET
+    YoVkScgSC7ezawi28IT5AToVc14kkMCImOrtByuZZ+GWfyXGiX1b3qOZnTERhn5k
+    1SgHEK9rhSVcL7z65ixQ0fwyNUG37HyWT/A1ITatfdgeURUwkkvfu1rG4Yj6L+Jz
+    TUgstRoisLC7bwQq/EO67G53C/rSfbgWv2y1FUzeoxzEqaXiMXhM98KheR+PvC8s
+    GSZ7GYZjF/YXIfrB+LMFX9Ohqp4P2AAJBtruiz7tt2lbQXrqCAyJ/9K5hANgiiZ8
+    If2jQn2UOi66ACwbP6TA2grmocFwmEAhXQ71lPeU4m+rOD5Uq1XZoKkfq1YatgpK
+    LwIDAQAB
+    -----END PUBLIC KEY-----'''
+
+    # Data to encrypt (string t)
+    t = m
+
+    # Load public key
+    public_key = RSA.import_key(public_key_pem)
+
+    # Create a cipher object using the public key
+    cipher = PKCS1_v1_5.new(public_key)
+
+    # Encrypt the data
+    encrypted_data = cipher.encrypt(t.encode('utf-8'))
+
+    # Base64 encode the encrypted data
+    encrypted_base64 = base64.b64encode(encrypted_data).decode('utf-8')
+
+
+
+    def extract(data):
+
+        import base64
+        from Crypto.Cipher import AES
+        from Crypto.Util.Padding import unpad
+
+        encrypted_data =data
+        key = m.encode('utf-8')
+
+        # Decode Base64 encrypted data
+        ciphertext = base64.b64decode(encrypted_data)
+
+        # Initialize AES cipher in ECB mode
+        cipher = AES.new(key, AES.MODE_ECB)
+
+        # Decrypt and unpad
+        decrypted_padded = cipher.decrypt(ciphertext)
+        decrypted = unpad(decrypted_padded, AES.block_size).decode('utf-8')
+
+  
+        return decrypted
+
+
+    # URL and headers for the request
+    url = f"https://api.mxplayer.in/v1/web/search/resultv2?query={movie_name}&&platform=com.mxplay.desktop&content-languages=hi,en&kids-mode-enabled=false"
+    headers = {
+        'Host': 'api.mxplayer.in',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Content-Type': 'application/json',
+        'x-guard-flag': 'true',
+        'x-guard-key': encrypted_base64,
+        'Origin': 'https://www.mxplayer.in',
+        'DNT': '1',
+        'Sec-GPC': '1',
+        'Connection': 'keep-alive',
+        'Referer': 'https://www.mxplayer.in/',
+    }
+
+    data={
+	    "requestBody": encrypted
+    }
+
+
+    # Making the GET request
+    response = requests.post(url, headers=headers,json=data,proxies=proxies)
+
+    # Checking the response status and content
+    if response.status_code == 200:
+   
+        response= response.json()['response']
+        output = extract(response)
+        data=json.loads(output)
+       
+        import json
+
+        BASE_URL = 'https://d3sgzbosmwirao.cloudfront.net/'
+
+        def c(e, t):
+            """Helper function to concatenate base URL if needed"""
+            if t and 'https://' not in t and 'http://' not in t:
+                return e + t
+            return t
+
+        def l(e):
+            """Check if third party provider is sun_tv"""
+            return e and e.get('provider') == 'thirdParty' and e.get('thirdParty', {}).get('name') == 'sun_tv'
+
+        def s(e, t):
+            """Process stream information to extract HLS and DASH URLs"""
+            n = e.get('provider')
+            a = e.get(n, {}) if n else {}
+            is_sun_tv = l(e)
+            result = {'hls': {}, 'dash': {}}
+    
+            if not a:
+                return result
+    
+            if is_sun_tv:
+                result['hls']['url'] = a.get('webHlsUrl')
+                return result
+    
+            # Process HLS
+            hls_source = a.get('hlsUrl') or a.get('hls')
+            hls_url = None
+            if isinstance(hls_source, dict):
+                hls_main = hls_source.get('main') or hls_source.get('base') or hls_source.get('high')
+                if n == 'mxplay' and hls_main:
+                    hls_url = c(t, hls_main)
+                else:
+                    hls_url = hls_main
+            elif hls_source:
+                hls_url = c(t, hls_source) if n == 'mxplay' else hls_source
+    
+            # Process DASH
+            dash_source = a.get('dashUrl') or a.get('dash')
+            dash_url = None
+            if isinstance(dash_source, dict):
+                dash_main = dash_source.get('main') or dash_source.get('base') or dash_source.get('high')
+                if n == 'mxplay' and dash_main:
+                    dash_url = c(t, dash_main)
+                else:
+                    dash_url = dash_main
+            elif dash_source:
+                dash_url = c(t, dash_source) if n == 'mxplay' else dash_source
+
+    
+            result['hls'].update({
+                'url': hls_url,
+                'hlsId': a.get('hlsId')
+            })
+    
+            result['dash'].update({
+                'url': dash_url,
+                'dashId': a.get('dashId')
+            })
+    
+            return result
+
+        def get_movie_or_tv_show_streams(api_response):
+            """Main function to process API response and extract streaming info"""
+            results = []
+            for section in api_response.get('sections', []):
+                for item in section.get('items', []):
+                    if item.get('type') == 'movie':
+                        stream_info = s(item.get('stream', {}), BASE_URL)
+                  
+                        results.append({
+                            'title': item.get('title'),
+                            'image':item.get('imageInfo', [None])[0]['url'],
+                            'type': item.get('type'),
+                            'hlsUrl': stream_info['hls'].get('url'),
+                            'dashUrl': stream_info['dash'].get('url'),
+                      
+                        })
+
+                    elif item.get('type')  == 'tvshow':
+                        tv_link = item.get('firstVideo')['id']
+                      
+
+                        play_link = 'https://api.mxplayer.in/v1/web/detail/video?type=episode&id='+tv_link+'&device-density=2&platform=com.mxplay.desktop&content-languages=hi,en&kids-mode-enabled=false'
+                        ep =  requests.get(play_link,headers=headers)
+                        stream_info = s(ep.json().get('stream', {}), BASE_URL)
+                    
+                        results.append({
+                            'title': item.get('title'),
+                            'image':item.get('imageInfo', [None])[0]['url'],
+                            'videoCount':item.get('videoCount'),
+                            'type': item.get('type'),
+                            'hlsUrl': stream_info['hls'].get('url'),
+                            'dashUrl': stream_info['dash'].get('url'),
+                            'container_id':ep.json()['container']['id']
+                  
+                        })
+
+
+            return results
+
+        
+        results = get_movie_or_tv_show_streams(data)
+        print(json.dumps(results, indent=2))
+        return jsonify(results)
+        
+ 
+
+   
+   
+    else:
+        print(f"Error: {response.status_code}")
+
+#@app.route('/episode', methods=['GET'])
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+#import requests
+
+#s = requests.Session()
+#proxy_url = "http://as77hs6qjikh4xg-country-in:neatfbj2cw4f37g@rp.scrapegw.com:6060"
+#proxies = {
+#    "http": proxy_url,
+#    "https": proxy_url,
+#}
+        
+#headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+#        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+#        "Accept-Language": "en-US,en;q=0.5",
+#        "Upgrade-Insecure-Requests": "1",
+#        "Sec-Fetch-Dest": "document",
+#        "Host":"api.mxplayer.in",
+#        "Sec-Fetch-Mode": "navigate",
+#        "Sec-Fetch-Site": "none",
+#        "Sec-Fetch-User": "?1",
+#        "Priority": "u=0, i",
+#        }
+
+##url = 'https://www.mxplayer.in'
+
+##response = s.get(url,headers=headers,proxies=proxies)
+##print(response.headers)
+
+##print(response.text)
+
+## URL to request
+#url = "https://api.mxplayer.in/v1/web/detail/video?type=movie&id=cf4148eed2c0bbdde82aa8e3164f91c6&device-density=2&platform=com.mxplay.desktop&content-languages=hi,en&kids-mode-enabled=false"
+
+#response = s.get(url,headers=headers,allow_redirects=True,proxies=proxies)
+#print(f"Status Code: {response.status_code}")
+#print(f"Response Content: {response.text}")
+
+#response = requests.get('http://ip-api.com/json/',proxies=proxies)
+#print(f"Status Code: {response.status_code}")
+#print(f"Response Content: {response.json()}")
